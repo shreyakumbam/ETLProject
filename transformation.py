@@ -5,11 +5,7 @@ from config_paths import config
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s %(levelname)s:%(message)s',
-    handlers=[
-        logging.FileHandler("etl_transform.log"),
-        logging.StreamHandler()
-    ]
+    format='%(asctime)s %(levelname)s:%(message)s'
 )
 
 def load_config(path):

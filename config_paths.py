@@ -7,6 +7,7 @@ config = {
     "config_file": os.getenv("config_file"),
     "extracted_path": os.getenv("extracted_file"),
     "transformation_path": os.getenv("transformation_file"),
+    "output_path": os.getenv("output_file"),
     "db_host": os.getenv("DB_HOST"),
     "db_port": os.getenv("DB_PORT"),
     "db_user": os.getenv("DB_USER"),
