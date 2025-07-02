@@ -25,8 +25,8 @@ Transformation
 Loader
     
     *Posgres Copy library included. 
-    
-    *Loaded the file into a 'loader_table" i.e. to destination posgres
+
+    *Loaded the file into a 'loader_table' i.e. to destination posgres
 
     TBD
 

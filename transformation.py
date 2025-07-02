@@ -11,15 +11,30 @@ logging.basicConfig(
 def load_config(path):
     try:
         df = pd.read_csv(path)
+
+        # Fill NaN in "Target Default Value" with empty strings (for later safe substitution)
+        df["Target Default Value"] = df["Target Default Value"].fillna("").astype(str)
+
+        # Strip spaces from all relevant columns
+        df["Source FieldName"] = df["Source FieldName"].str.strip().str.lower()
+        df["Target FieldName"] = df["Target FieldName"].astype(str).str.strip()
+        df["Target DataType"] = df["Target DataType"].astype(str).str.strip().str.lower()
+
+        # Replace empty Target FieldNames with the corresponding Target Default Values
+        df["Target FieldName"] = df.apply(
+            lambda row: row["Target Default Value"] if row["Target FieldName"] == "" else row["Target FieldName"],
+            axis=1
+        )
+
+        # Drop rows where Target FieldName or DataType is still missing after fallback
         df = df.dropna(subset=["Target FieldName", "Target DataType"])
+        df = df[df["Target FieldName"] != ""]  # In case both were empty
+
+        # Drop duplicates
         df = df.drop_duplicates(subset=["Target FieldName"], keep="first")
 
-        # Normalize column names
-        df["Source FieldName"] = df["Source FieldName"].str.strip().str.lower()
-        df["Target FieldName"] = df["Target FieldName"].str.strip()
-        df["Target DataType"] = df["Target DataType"].str.strip().str.lower()
-        df["Target Default Value"] = df["Target Default Value"].fillna("")
         return df
+
     except Exception as e:
         logging.error(f"Failed to load config file: {e}")
         raise
@@ -44,7 +59,7 @@ def transform_data(df, config_df):
                 logging.warning(f"Column '{source_col}' not found in data. Skipping.")
                 continue
 
-            # Fill missing values
+            # Fill missing values if default is provided
             default_val = default_value_map.get(source_col)
             if default_val != "":
                 df[source_col] = df[source_col].fillna(default_val)
@@ -56,7 +71,11 @@ def transform_data(df, config_df):
             elif dtype == "string":
                 df[source_col] = df[source_col].astype(str)
 
-        df = df.rename(columns=source_to_target)
+        # Rename columns that exist in the data
+        existing_cols = [col for col in source_to_target if col in df.columns]
+        rename_map = {col: source_to_target[col] for col in existing_cols}
+        df = df.rename(columns=rename_map)
+
         return df
     except Exception as e:
         logging.error(f"Error during transformation: {e}")
