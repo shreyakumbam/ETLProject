@@ -12,7 +12,10 @@ def load_config(path):
     try:
         df = pd.read_csv(path)
 
-        # Fill NaN in "Target Default Value" with empty strings (for later safe substitution)
+        # Drop duplicates
+        df = df.drop_duplicates(subset=["Target FieldName"], keep="first")
+
+         # Fill NaN in "Target Default Value" with empty strings
         df["Target Default Value"] = df["Target Default Value"].fillna("").astype(str)
 
         # Strip spaces from all relevant columns
@@ -29,9 +32,6 @@ def load_config(path):
         # Drop rows where Target FieldName or DataType is still missing after fallback
         df = df.dropna(subset=["Target FieldName", "Target DataType"])
         df = df[df["Target FieldName"] != ""]  # In case both were empty
-
-        # Drop duplicates
-        df = df.drop_duplicates(subset=["Target FieldName"], keep="first")
 
         return df
 
