@@ -1,18 +1,3 @@
-CREATE TABLE etl_data (
-    SourceDocumentID INTEGER,
-    FileName VARCHAR(256),
-    Title VARCHAR(100),
-	DataDescription TEXT,
-    QCScanDate DATE,
-    CMODLoadDate DATE,
-    ScanDate DATE,
-    DocumentID VARCHAR(100),
-    BatchReferenceID INTEGER,
-    BatchClassName TEXT
-);
-
-DROP TABLE etl_data;
-
 INSERT INTO etl_data (
     SourceDocumentID, DataDescription, FileName, Title, QCScanDate, CMODLoadDate, ScanDate, DocumentID, BatchReferenceID, BatchClassName) 
 VALUES
@@ -34,26 +19,20 @@ VALUES
 
 (1005, 
 'Packing list generated for shipment #56789 detailing all items included in the dispatch. Document includes 128 line items with SKUs, item descriptions, quantity per carton, weight, dimensions, and special handling instructions. Generated automatically via ERP system at 06:23 AM on 2023-07-11. Reviewed and approved by Warehouse Manager prior to outbound scan. Pallet ID ranges PLT-402 to PLT-415. Contains grouped product types categorized for destination hubs. Internal notes show carton seals were inspected and verified. The file is signed digitally by two team leads and checked into the logistics archive. Barcode page was appended to the end for quick validation. This packing list is part of a bundled shipment tagged to OrderGroup_778_AugustWave. The list has been matched against the outbound shipping manifest. Timestamps, delivery region tags, and picker IDs included. Document passed integrity check and OCR was verified. Archived at 2023_logistics/batch56789 for downstream review and audit. Reference tracking ID: LTS789003214.',
+
 'packing_56789.pdf', 'Packing List 56789', '2023-07-12', '2023-07-13', '2023-07-11', 'DOC1005', 505, 'LogisticsBatch');
 
 
-
-UPDATE etl_data SET source = null 
-WHERE sourcebatchid = 'SB002';
-
-SELECT * FROM etl_data;
-
-
-CREATE TABLE loader_table (
-    Description TEXT,
-    uuid INTEGER,
-    Name TEXT,
-    title TEXT,
-    SysLoadDate DATE,
-    CMODLoadDate DATE,
-    scandate DATE,
-    SysDocId TEXT,
-    Reference INTEGER
-);
+SELECT * FROM loader_table;
 
 CREATE EXTENSION IF NOT EXISTS vector;
+
+DROP TABLE IF EXISTS etl_embeddings;
+
+CREATE TABLE etl_embeddings (
+    SourceDocumentID INTEGER PRIMARY KEY,
+    DataDescription TEXT,
+    Embedding vector(768)
+);
+
+SELECT * FROM etl_embeddings;

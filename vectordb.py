@@ -1,6 +1,7 @@
 import os
 import psycopg2
 import numpy as np
+import pandas as pd
 import logging
 from dotenv import load_dotenv
 from config_paths import config
@@ -48,12 +49,9 @@ def generate_embeddings():
     for source_doc_id, description in rows:
         try:
             description = description or ""
-
-            # Generate a fake embedding (1536-dim) for testing
             embedding = np.random.rand(1536).tolist()
             vector_str = "[" + ",".join(map(str, embedding)) + "]"
 
-            # Insert with conflict handling to avoid duplicates
             cur.execute("""
                 INSERT INTO etl_embeddings (SourceDocumentID, DataDescription, Embedding)
                 VALUES (%s, %s, %s::vector)
@@ -76,5 +74,48 @@ def generate_embeddings():
     conn.close()
     logging.info("Database connection closed.")
 
+def embeddings_to_csv(output_file="etl_embeddings.csv"):
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT"),
+            user=os.getenv("DB_USERNAME"),
+            password=os.getenv("DB_PASSWORD"),
+            dbname=os.getenv("DB_NAME")
+        )
+        cur = conn.cursor()
+        logging.info("Connected to PostgreSQL for export.")
+    except Exception as e:
+        logging.error("Failed to connect to DB.", exc_info=True)
+        return
+
+    try:
+        cur.execute("SELECT SourceDocumentID, DataDescription, Embedding FROM etl_embeddings")
+        rows = cur.fetchall()
+        logging.info(f"Fetched {len(rows)} rows from etl_embeddings.")
+    except Exception as e:
+        logging.error("Failed to fetch data from etl_embeddings.", exc_info=True)
+        cur.close()
+        conn.close()
+        return
+
+    # Prepare DataFrame (keep embedding as single string column)
+    data = []
+    for row in rows:
+        source_id, description, embedding = row
+        data.append({
+            "SourceDocumentID": source_id,
+            "DataDescription": description,
+            "Embedding": str(embedding)
+        })
+
+    df = pd.DataFrame(data)
+    df.to_csv(output_file, index=False)
+    logging.info(f"Exported embeddings to {output_file}")
+
+    cur.close()
+    conn.close()
+
 if __name__ == "__main__":
     generate_embeddings()
+    embeddings_to_csv("etl_embeddings.csv")
